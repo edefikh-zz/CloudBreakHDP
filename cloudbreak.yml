@@ -1,0 +1,92 @@
+
+- hosts: Cloudbreak
+  become: true
+  tags: preconf
+  gather_facts: no
+
+  tasks:
+
+  - name: add vars 
+    include_vars:
+      file: ./variables/variables
+
+#  This part included due to customer request, for mount extra disk space at RHEL 
+#  - name: allocating extra space
+#    command: "{{item}}"
+#      with_items:
+#       - bash -c "echo -e 'n\np\n3\n\n\nt\n3\n8e\nw\nq\n' | fdisk /dev/xvda"
+#       - bash -c "pvcreate /dev/xvda3"
+#       - bash -c "vgextend VolGroup00 /dev/xvda3"
+#       - bash -c "lvresize -r -l +100%FREE /dev/mapper/VolGroup00-varVol"
+
+  - name: update
+    yum: 
+      name: '*'
+      state: latest
+
+  - name: install iptables-services
+    yum:
+      name:
+        - net-tools
+        - ntp
+        - wget
+        - lsof
+        - unzip
+        - tar
+        - iptables-services
+      state: latest
+
+  - name: start ntpd
+    service:
+     name: ntpd
+     enabled: yes
+     state: started
+
+  - name: Configure permissive iptables
+    command:  "{{item}}"
+    with_items:
+     - iptables --flush INPUT
+     - iptables --flush FORWARD
+     - service iptables save
+    warn: no
+
+  - name: disable SELINUX
+    command:  "{{item}}"
+    with_items:
+     - setenforce 0
+     - sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+    warn: no
+
+  - name: Reboot the server
+    command: shutdown -r +1 && sleep 1
+    async: 0
+    poll: 0
+    ignore_errors: true
+
+  - pause: seconds=65
+
+  - name: Wait for the server to finish rebooting
+    wait_for_connection:
+      timeout: 300
+
+  - name: install the Cloudbreak deployer
+    command:  "{{item}}"
+    with_items:
+     - bash -c "curl -Ls public-repo-1.hortonworks.com/HDP/cloudbreak/cloudbreak-deployer_2.7.1_$(uname)_x86_64.tgz | sudo tar -xz -C /bin cbd"
+
+  - name: send Cloudbreak's vars
+    command:  "{{item}}"
+    with_items:
+     - bash -c "echo 'export UAA_DEFAULT_SECRET='{{ MY_SECRET }}>Profile"
+     - bash -c "echo 'export UAA_DEFAULT_USER_PW='{{ MY_PASSWORD }}>>Profile"
+     - bash -c "echo 'export UAA_DEFAULT_USER_EMAIL='{{ MY_MAIL }}>>Profile"
+     - bash -c "echo 'export CB_AWS_VPC='{{ VpcId }}"
+     - bash -c "echo 'export PUBLIC_IP='{{ hostvars[groups['Cloudbreak'][0]].ansible_ssh_host }}>>Profile"
+     - bash -c "echo 'export PRIVATE_IP=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)'"
+
+  - name: launch Cloudbreak 
+    command:  "{{item}}"
+    with_items:
+     - bash -c "cbd generate"
+     - bash -c "cbd pull-parallel"
+     - bash -c "cbd start"  

@@ -1,0 +1,116 @@
+{
+  "inputs": {},
+  "general": {
+    "credentialName": "{{ CredentialName }}",
+    "name": "{{ ClusterName }}"
+  },
+  "placement": {
+    "region": "{{ Region }}",
+    "availabilityZone": "{{ Region }}a"
+  },
+  "tags": {
+    "userDefinedTags": {}
+  },
+  "cluster": {
+    "ambari": {
+      "blueprintName": "{{ BluePrintName }}",
+      "platformVersion": "HDP 2.6",
+      "gateway": {
+        "enableGateway": true,
+        "topologies": [
+          {
+            "topologyName": "dp-proxy",
+            "exposedServices": [
+              "AMBARI"
+            ]
+          }
+        ],
+        "ssoType": "NONE"
+      },
+      "userName": "admin",
+      "password": "",
+      "validateBlueprint": false,
+      "ambariSecurityMasterKey": "",
+      "enableSecurity": false
+    },
+    "sharedService": {}
+  },
+  "network": {
+    "parameters": {
+      "vpcId": "{{ VpcId }}",
+      "subnetId": "{{ SubnetId }}"
+    }
+  },
+  "instanceGroups": [
+    {
+      "parameters": {},
+      "template": {
+        "parameters": {
+          "encrypted": false
+        },
+        "instanceType": "{{ ClusterInstanceType }}",
+        "volumeType": "standard",
+        "volumeCount": {{ VolumeCount }},
+        "volumeSize": {{ VolumeSize }},
+        "rootVolumeSize": 50
+      },
+      "nodeCount": 1,
+      "group": "hdpmaster",
+      "type": "GATEWAY",
+      "recoveryMode": "MANUAL",
+      "securityGroup": {
+        "securityRules": [
+          {
+            "subnet": "0.0.0.0/0",
+            "ports": "9443",
+            "protocol": "tcp"
+          },
+          {
+            "subnet": "0.0.0.0/0",
+            "ports": "22",
+            "protocol": "tcp"
+          },
+          {
+            "subnet": "0.0.0.0/0",
+            "protocol": "tcp",
+            "ports": "8443"
+          },
+          {
+            "subnet": "10.0.0.0/16",
+            "ports": "1-65535",
+            "protocol": "tcp"
+          }
+        ]
+      }
+    },
+    {
+      "parameters": {},
+      "template": {
+        "parameters": {
+          "encrypted": false
+        },
+        "instanceType": "{{ ClusterInstanceType }}",
+        "volumeType": "standard",
+        "volumeCount": {{ VolumeCount }},
+        "volumeSize": {{ VolumeSize }},
+        "rootVolumeSize": 50
+      },
+      "nodeCount": 1,
+      "group": "hdpslave",
+      "type": "CORE",
+      "recoveryMode": "MANUAL",
+      "securityGroup": {
+        "securityRules": [
+          {
+            "subnet": "0.0.0.0/0",
+            "protocol": "tcp",
+            "ports": "22"
+          }
+        ]
+      }
+    }
+  ],
+  "stackAuthentication": {
+    "publicKeyId": "{{ SSHKeyName }}"
+  }
+}

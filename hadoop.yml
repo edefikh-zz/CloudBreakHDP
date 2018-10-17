@@ -1,0 +1,43 @@
+- hosts: Cloudbreak
+  become: true
+  tags: preconf
+  gather_facts: no
+  
+  tasks:
+
+  - name: add vars 
+    include_vars:
+      file: ./variables/variables
+
+  - name: create directory
+    file:
+      path: /var/lib/cloudbreak-deployment/
+      state: directory
+      mode: "0755"
+
+  - name: Copy blueprint
+    copy:
+      src: ./template/blueprint.json
+      dest: /var/lib/cloudbreak-deployment/blueprint.json
+      mode: "744"
+    
+  - name: Copy template
+    template:
+      src: ./template/template.json
+      dest: /var/lib/cloudbreak-deployment/template.json
+      mode: "744"
+    
+  - name: Download & run CLI
+    command: "{{item}}"
+    with_items:
+      - bash -c "curl -Ls https://s3-us-west-2.amazonaws.com/cb-cli/cb-cli_2.7.1_Linux_x86_64.tgz | sudo tar -xz -C /usr/bin cb"
+      - bash -c "cb configure --server {{ hostvars[groups['Cloudbreak'][0]].ansible_ssh_host }} --username {{ MY_MAIL }} --password {{ MY_PASSWORD }}"
+    
+  - name: Create creds and upload blueprint
+    command: "{{item}}"
+    with_items:
+      - bash -c "cb credential create aws role-based --name {{CredentialName}} --role-arn {{DeployerRoleArn}} --password {{ MY_PASSWORD }}"
+      - bash -c "cb blueprint create from-file --name {{BluePrintName}} --description hadoop-cluster-blueprint --file /var/lib/cloudbreak-deployment/blueprint.json --password {{ MY_PASSWORD }}"
+    
+  - name: Run Cluster
+    command: bash -c "cb cluster create --cli-input-json /var/lib/cloudbreak-deployment/template.json --name cli-cluster --input-json-param-password {{ ClusterPassword }}"
