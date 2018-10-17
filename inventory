@@ -1,2 +1,2 @@
 [Cloudbreak]
-cloudbreak ansible_ssh_host=52.205.74.152 node_name=Cloudbreak ansible_ssh_user=centos
+cloudbreak ansible_ssh_host=xx.xx.xx.xx node_name=Cloudbreak ansible_ssh_user=centos
