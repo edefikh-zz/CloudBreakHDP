@@ -1,15 +1,15 @@
-    MY_SECRET: Q1w2e3r4
-    MY_PASSWORD: W2e3r4t5
-    MY_MAIL: defikh@gmail.com
+    MY_SECRET: xxx
+    MY_PASSWORD: xxx
+    MY_MAIL: xxx
     CredentialName: awscreds
     Region: us-east-1
-    DeployerRoleArn: arn:aws:iam::770377615785:role/CBCredentialRole
+    DeployerRoleArn: arn:aws:iam::xxx:role/CBCredentialRole
     ClusterInstanceType: t2.xlarge
     ClusterName: Test-cluster
     VolumeSize: 40
     VolumeCount: 1
-    ClusterPassword: Q1w2e3r4
+    ClusterPassword: xxx
     BluePrintName: hdp26-data-science-spark2
-    VpcId: vpc-077dbf81e9d0c070c
-    SubnetId: subnet-0a4b46a64428d6f9a
-    SSHKeyName: max_hdp
+    VpcId: vpc-xxx
+    SubnetId: subnet-xxx
+    SSHKeyName: xxx
